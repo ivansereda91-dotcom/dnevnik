@@ -1,0 +1,365 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Кинодневник</title>
+<link id="kp-fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;700&amp;family=Unbounded:wght@500;700&amp;display=swap">
+<style id="kp-style">
+/* Layout: one narrow column, sticky tab strip, dense film rows like a ticket stub list */
+:root{
+  --bg:#e9def7; --surface:#ffffff; --ink:#16181d; --muted:#666b78; --line:#e1e3ea;
+  --accent:#b8660b; --accent-soft:#f6e7d3;
+  --good:#2f9e44; --mid:#8a8f9c; --bad:#d6453d;
+  --display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1e1530; --surface:#1a1d24; --ink:#eceef3; --muted:#9aa0ad; --line:#2a2e38;
+  --accent:#e9a748; --accent-soft:#3a2c17; --good:#4cc263; --mid:#7c8290; --bad:#f06b62; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1e1530; --surface:#1a1d24; --ink:#eceef3; --muted:#9aa0ad; --line:#2a2e38;
+  --accent:#e9a748; --accent-soft:#3a2c17; --good:#4cc263; --mid:#7c8290; --bad:#f06b62; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body)}
+#app{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
+h1{font:700 26px/1.1 var(--display);letter-spacing:-.01em;margin:0;text-wrap:balance}
+.top{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:8px 16px}
+.save{font-size:12px;color:var(--muted);padding:3px 9px;border:1px solid var(--line);border-radius:99px;white-space:nowrap}
+.save.busy{color:var(--accent);border-color:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-block:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.kpi b{display:block;font:700 22px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;padding-block:8px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{flex:1 0 auto;font:600 14px var(--body);color:var(--muted);background:none;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-block:12px}
+.tools input,.tools select{font:14px var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.tools input[type=search]{flex:1 1 220px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chip{font:500 13px var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 11px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.count{font-size:13px;color:var(--muted);margin-block:4px 8px}
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.rowbtn{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:10px 12px;cursor:pointer}
+.rowbtn:hover{background:var(--bg)}
+.score{width:40px;height:40px;border-radius:8px;display:grid;place-items:center;font:700 16px var(--mono);color:#fff;background:var(--mid)}
+.score.g{background:var(--good)} .score.b{background:var(--bad)}
+.score.none{background:none;border:1.5px dashed var(--line);color:var(--muted);font-size:13px}
+.score.pred{background:var(--accent-soft);color:var(--accent);font-size:14px}
+.t{min-width:0}
+.t b{display:block;font-weight:600;overflow-wrap:anywhere}
+.t small{display:block;color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}
+.yr{font:500 13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.edit{padding:4px 12px 14px 68px;display:flex;flex-direction:column;gap:10px}
+.why{font-size:13px;color:var(--muted)}
+.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.scale button{font:700 14px var(--mono);padding:8px 0;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.scale button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.more{display:block;margin:12px auto 0}
+h2{font:700 17px/1.2 var(--display);margin:24px 0 4px;text-wrap:balance}
+.lede{color:var(--muted);font-size:14px;margin:0 0 12px;max-width:62ch}
+.rec{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:12px;border-top:1px solid var(--line)}
+.rec:first-child{border-top:0}
+.rec p{grid-column:1/-1;margin:0;font-size:13.5px;color:var(--muted)}
+.rec .btn{align-self:start}
+.added{font-size:13px;color:var(--good);font-weight:600;align-self:start}
+.bars{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.bar{display:grid;grid-template-columns:minmax(0,120px) 1fr 76px;gap:10px;align-items:center;font-size:13px}
+.bar .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .trk{height:12px;background:var(--bg);border-radius:3px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent);border-radius:3px}
+.bar .val{font:500 12.5px var(--mono);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.addform{display:flex;flex-wrap:wrap;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.addform input{font:14px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.addform input#add-title{flex:1 1 200px}
+.addform input#add-year{width:84px}
+.addform input#add-genre{flex:0 1 140px}
+.empty{padding:24px;text-align:center;color:var(--muted)}
+.topr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.addbtn{font:600 14px var(--body);padding:8px 14px;border-radius:99px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.panel{background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.panel h3{font:700 15px var(--display);margin:0}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fgrid input{font:14px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0;width:100%;box-sizing:border-box}
+.fgrid .wide{grid-column:1/-1}
+.flabel{font-size:13px;color:var(--muted)}
+.match{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px;background:var(--accent-soft);border-radius:8px;padding:8px 10px}
+.match span{min-width:0;overflow-wrap:anywhere}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
+.err{color:var(--bad);font-size:13px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:480px){.edit{padding-left:12px}.kpi b{font-size:19px}.bar{grid-template-columns:minmax(0,90px) 1fr 64px}}
+</style>
+<div id="app"><p class="empty">Загружаю фильмы…</p></div>
+<script id="kp-data" type="application/json">__KP_DATA__</script>
+<script id="kp-js">
+(function(){
+const D=JSON.parse(document.getElementById('kp-data').textContent);
+// rated: [title, orig, year, genre, rating|null]; watch: [title, orig, year, genre]
+const PICKS=[
+ ["Сталкер","",1979,"фантастика","Тарковский уже в вашем списке («Ностальгия», «Андрей Рублёв»). Начните с самого цельного его фильма."],
+ ["Агирре, гнев божий","Aguirre, der Zorn Gottes",1972,"драма","Пара к «Фицкарральдо» из списка: тот же Херцог, Кински и безумная экспедиция в джунгли."],
+ ["Затмение","L'eclisse",1962,"драма","Завершает трилогию Антониони, в которую входит «Ночь» из вашего списка."],
+ ["Расёмон","Rashômon",1950,"детектив","Детектив с четырьмя версиями одного преступления. Классику до 1970-х вы оцениваете почти всегда на 10."],
+ ["Похитители велосипедов","Ladri di biciclette",1948,"драма","Главный фильм итальянского неореализма, короткий и очень простой по форме."],
+ ["Головокружение","Vertigo",1958,"триллер","Хичкок на пике. Триллеры у вас в плюсе, а 1950-е — в среднем 10."],
+ ["Бульвар Сансет","Sunset Blvd.",1950,"драма","Голливуд о самом себе: нуар, сатира и одна из лучших ролей в истории кино."],
+ ["Однажды на Диком Западе","C'era una volta il West",1968,"вестерн","Леоне снимал её как оперу. Вы высоко оцениваете кино 1960-х и криминальные саги."],
+ ["Опасные пассажиры поезда 123","The Taking of Pelham One Two Three",1974,"триллер","Оригинал 1974 года: захват поезда в нью-йоркском метро, жёсткий и остроумный."],
+ ["Тайна в его глазах","El secreto de sus ojos",2009,"детектив","Аргентинский детектив с «Оскаром». Криминал вы оцениваете в среднем на 9,4."],
+ ["Дерсу Узала","Дерсу Узала",1975,"драма","Куросава снимал её в СССР, в уссурийской тайге. Это приключенческое кино и история дружбы."],
+ ["Человек на канате","Man on Wire",2008,"документальный","Документальное кино у вас лучший жанр (9,5). Это история прохода по канату между башнями ВТЦ."],
+ ["В поисках Сахарного Человека","Searching for Sugar Man",2012,"документальный","Детективное расследование о забытом американском музыканте, который стал звездой в ЮАР."],
+ ["В поисках Вивиан Майер","Finding Vivian Maier",2013,"документальный","Няня из Чикаго оставила после себя 100 тысяч плёночных негативов."],
+ ["Пещера забытых снов","Cave of Forgotten Dreams",2010,"документальный","Херцог в пещере Шове на юге Франции, где сохранились самые древние рисунки человечества."],
+ ["Акт убийства","The Act of Killing",2012,"документальный","Тяжёлый и очень сильный фильм: палачи 1965 года разыгрывают свои убийства как кино."],
+ ["Вальс с Баширом","Vals Im Bashir",2008,"мультфильм","Анимационная документалка о памяти и войне. Сочетает два ваших лучших жанра."],
+ ["Унесённые призраками","Sen to Chihiro no kamikakushi",2001,"мультфильм","Мультфильмы у вас в среднем на 9,5, а главного фильма Миядзаки в оценках нет."],
+ ["Принцесса Мононоке","Mononoke-hime",1997,"мультфильм","Самый взрослый и эпичный Миядзаки: война людей и лесных духов."],
+ ["Мой сосед Тоторо","Tonari no Totoro",1988,"мультфильм","Тихий и тёплый Миядзаки, хорош на любой вечер."],
+ ["Мэри и Макс","Mary and Max",2009,"мультфильм","Пластилиновая анимация о дружбе по переписке. Смешно и грустно одновременно."],
+ ["Ёжик в тумане","",1975,"мультфильм","Норштейн, 10 минут. Его часто называют лучшим мультфильмом всех времён."]
+];
+const norm=s=>String(s||'').toLowerCase().replace(/ё/g,'е').trim();
+const UI={tab:'rated',q:'',genre:'',sort:'date',rf:'',wq:'',wsort:'pred',open:null,limit:80,adding:false,toast:'',nf:{title:'',orig:'',year:'',genre:'',rate:null,err:''}};
+let toastT;function toast(m){UI.toast=m;clearTimeout(toastT);toastT=setTimeout(()=>{UI.toast='';render();},2600);}
+try{const s=JSON.parse(localStorage.getItem('kp-ui')||'{}');if(s.tab)UI.tab=s.tab;}catch(e){}
+let saver=null, mode='loading', saveTimer=null, dirty=false;
+try{const loc=JSON.parse(localStorage.getItem('kp-local')||'null');if(loc&&loc.v>(D.v||0)){D.rated=loc.rated;D.watch=loc.watch;D.v=loc.v;}}catch(e){}
+
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=x=>x.toFixed(1).replace('.',',');
+const cls=r=>r==null?'none':r>=7?'g':r<=4?'b':'';
+const dec=y=>y?Math.floor(y/10)*10:null;
+
+function model(){
+  const rs=D.rated.filter(x=>x[4]!=null);
+  const m=rs.reduce((a,x)=>a+x[4],0)/rs.length;
+  const G={},Y={};
+  rs.forEach(x=>{(G[x[3]]??=[0,0]);G[x[3]][0]+=x[4];G[x[3]][1]++;const d=dec(x[2]);if(d!=null){(Y[d]??=[0,0]);Y[d][0]+=x[4];Y[d][1]++;}});
+  const k=15,sh=s=>s?(s[0]+k*m)/(s[1]+k):m,raw=s=>s?s[0]/s[1]:null;
+  const pred=(g,y)=>Math.max(1,Math.min(10,m+(sh(G[g])-m)+(sh(Y[dec(y)])-m)));
+  return {m,n:rs.length,G,Y,pred,raw};
+}
+
+function predWhy(M,w){
+  const g=M.G[w[3]],y=M.Y[dec(w[2])],p=[];
+  if(g&&g[1]>=3)p.push(`${w[3]} у вас в среднем ${fmt(g[0]/g[1])} (${g[1]})`);
+  if(y&&y[1]>=3)p.push(`${dec(w[2])}-е — ${fmt(y[0]/y[1])}`);
+  return p.length?p.join(' · '):'Мало похожих оценок, прогноз близок к вашей средней';
+}
+
+function scaleHTML(cur,act,i){
+  let h='<div class="scale" role="group" aria-label="Оценка">';
+  for(let s=1;s<=10;s++)h+=`<button type="button" data-act="${act}" data-i="${i}" data-s="${s}" class="${cur===s?'on':''}">${s}</button>`;
+  return h+'</div>';
+}
+
+function render(){
+  const M=model(), app=document.getElementById('app');
+  const st=mode==='artifact'?(dirty?'Сохраняю…':'Сохранено'):mode==='local'?'Сохраняется в этом браузере':mode==='readonly'?'Только просмотр':'Подключаю сохранение…';
+  let h=`<div class="top"><h1>Кинодневник</h1><div class="topr"><span class="save ${dirty?'busy':''}" id="save">${st}</span><button class="addbtn" data-act="addopen" aria-expanded="${UI.adding}">${UI.adding?'Закрыть':'+ Фильм'}</button></div></div>${UI.adding?addPanel():''}
+  <div class="kpis">
+   <div class="kpi"><b>${D.rated.length.toLocaleString('ru')}</b><span>просмотрено</span></div>
+   <div class="kpi"><b>${fmt(M.m)}</b><span>средняя оценка</span></div>
+   <div class="kpi"><b>${D.watch.length}</b><span>к просмотру</span></div>
+  </div>
+  <div class="tabs" role="tablist">${[['rated','Оценки'],['watch','К просмотру'],['recs','Рекомендации'],['stats','Статистика']].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${UI.tab===k}">${l}</button>`).join('')}</div>`;
+  if(UI.tab==='rated')h+=ratedView(M);
+  if(UI.tab==='watch')h+=watchView(M);
+  if(UI.tab==='recs')h+=recsView(M);
+  if(UI.tab==='stats')h+=statsView(M);
+  if(UI.toast)h+=`<div class="toast" role="status">${esc(UI.toast)}</div>`;
+  const ae=document.activeElement, aid=ae&&ae.id, sel=aid&&ae.selectionStart;
+  app.innerHTML=h;
+  if(aid){const el=document.getElementById(aid);if(el){el.focus();try{el.setSelectionRange(sel,sel)}catch(e){}}}
+}
+
+function addPanel(){
+  const F=UI.nf, genres=[...new Set(D.rated.map(x=>x[3]).concat(D.watch.map(x=>x[3])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru'));
+  const q=norm(F.title);let matches='';
+  if(q.length>=2){
+    const r=D.rated.map((x,i)=>[x,i]).filter(([x])=>norm(x[0]).includes(q)||norm(x[1]).includes(q)).slice(0,3);
+    const w=D.watch.map((x,i)=>[x,i]).filter(([x])=>norm(x[0]).includes(q)||norm(x[1]).includes(q)).slice(0,3);
+    matches=r.map(([x,i])=>`<div class="match"><span>Уже в оценках: <b>${esc(x[0])}</b> ${x[2]||''} — ${x[4]??'без оценки'}</span><button type="button" class="btn" data-act="jump" data-k="r${i}">Изменить</button></div>`).join('')
+     +w.map(([x,i])=>`<div class="match"><span>В «К просмотру»: <b>${esc(x[0])}</b> ${x[2]||''}</span><button type="button" class="btn" data-act="jump" data-k="w${i}">Оценить</button></div>`).join('');
+  }
+  return `<form class="panel" id="nf"><h3>Новый фильм</h3>
+   <div class="fgrid">
+    <input class="wide" id="nf-title" placeholder="Название" aria-label="Название" value="${esc(F.title)}" autocomplete="off">
+    <input class="wide" id="nf-orig" placeholder="Оригинальное название (необязательно)" aria-label="Оригинальное название" value="${esc(F.orig)}" autocomplete="off">
+    <input id="nf-year" inputmode="numeric" placeholder="Год" aria-label="Год" value="${esc(F.year)}">
+    <input id="nf-genre" list="nf-genres" placeholder="Жанр" aria-label="Жанр" value="${esc(F.genre)}">
+    <datalist id="nf-genres">${genres.map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
+   </div>${matches}
+   <span class="flabel">Оценка${F.rate?`: ${F.rate}`:' (если уже посмотрели)'}</span>${scaleHTML(F.rate,'nfrate',0)}
+   ${F.err?`<span class="err">${esc(F.err)}</span>`:''}
+   <div class="acts"><button class="btn pri" type="submit" data-dest="rated">${F.rate?'Сохранить с оценкой '+F.rate:'Посмотрел, без оценки'}</button><button class="btn" type="submit" data-dest="watch">Хочу посмотреть</button></div>
+  </form>`;
+}
+
+function ratedView(M){
+  const genres=[...new Set(D.rated.map(x=>x[3]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru'));
+  let rows=D.rated.map((x,i)=>[x,i]);
+  const q=norm(UI.q);
+  if(q)rows=rows.filter(([x])=>norm(x[0]).includes(q)||norm(x[1]).includes(q));
+  if(UI.genre)rows=rows.filter(([x])=>x[3]===UI.genre);
+  const rf=UI.rf;
+  if(rf==='none')rows=rows.filter(([x])=>x[4]==null);
+  else if(rf==='low')rows=rows.filter(([x])=>x[4]!=null&&x[4]<=6);
+  else if(rf)rows=rows.filter(([x])=>x[4]===+rf);
+  const s=UI.sort;
+  if(s==='rd')rows.sort((a,b)=>(b[0][4]??-1)-(a[0][4]??-1));
+  if(s==='ra')rows.sort((a,b)=>(a[0][4]??99)-(b[0][4]??99));
+  if(s==='yn')rows.sort((a,b)=>(b[0][2]||0)-(a[0][2]||0));
+  if(s==='yo')rows.sort((a,b)=>(a[0][2]||9999)-(b[0][2]||9999));
+  if(s==='az')rows.sort((a,b)=>a[0][0].localeCompare(b[0][0],'ru'));
+  let h=`<div class="tools">
+   <input type="search" id="q" placeholder="Название, в т.ч. оригинальное" value="${esc(UI.q)}" aria-label="Поиск">
+   <select id="genre" aria-label="Жанр"><option value="">Все жанры</option>${genres.map(g=>`<option ${UI.genre===g?'selected':''}>${esc(g)}</option>`).join('')}</select>
+   <select id="sort" aria-label="Сортировка">${[['date','Как в Кинопоиске'],['rd','Оценка ↓'],['ra','Оценка ↑'],['yn','Год: новые'],['yo','Год: старые'],['az','По алфавиту']].map(([k,l])=>`<option value="${k}" ${UI.sort===k?'selected':''}>${l}</option>`).join('')}</select>
+  </div>
+  <div class="chips">${[['','Все'],['10','10'],['9','9'],['8','8'],['7','7'],['low','6 и ниже'],['none','Без оценки']].map(([k,l])=>`<button class="chip" data-rf="${k}" aria-pressed="${UI.rf===k}">${l}</button>`).join('')}</div>
+  <div class="count">${rows.length.toLocaleString('ru')} ${plural(rows.length,'фильм','фильма','фильмов')}. Нажмите на фильм, чтобы изменить оценку.</div>`;
+  if(!rows.length)return h+'<div class="list"><div class="empty">Ничего не нашлось</div></div>';
+  h+='<div class="list">'+rows.slice(0,UI.limit).map(([x,i])=>{
+    const open=UI.open==='r'+i;
+    return `<div class="row"><button class="rowbtn" data-open="r${i}" aria-expanded="${open}">
+     <span class="score ${cls(x[4])}">${x[4]??'—'}</span>
+     <span class="t"><b>${esc(x[0])}</b><small>${esc([x[1],x[3]].filter(Boolean).join(' · '))}</small></span>
+     <span class="yr">${x[2]||''}</span></button>
+     ${open?`<div class="edit">${scaleHTML(x[4],'rate',i)}<div class="acts">${x[4]!=null?`<button class="btn" data-act="unrate" data-i="${i}">Убрать оценку</button>`:''}<button class="btn" data-act="towatch" data-i="${i}">Вернуть в «К просмотру»</button></div></div>`:''}</div>`;
+  }).join('')+'</div>';
+  if(rows.length>UI.limit)h+=`<button class="btn more" data-act="more">Показать ещё ${Math.min(200,rows.length-UI.limit)}</button>`;
+  return h;
+}
+
+function watchView(M){
+  let rows=D.watch.map((x,i)=>[x,i,M.pred(x[3],x[2])]);
+  const q=norm(UI.wq);
+  if(q)rows=rows.filter(([x])=>norm(x[0]).includes(q)||norm(x[1]).includes(q));
+  if(UI.wsort==='pred')rows.sort((a,b)=>b[2]-a[2]);
+  if(UI.wsort==='yo')rows.sort((a,b)=>(a[0][2]||9999)-(b[0][2]||9999));
+  if(UI.wsort==='yn')rows.sort((a,b)=>(b[0][2]||0)-(a[0][2]||0));
+  let h=`<div class="tools"><input type="search" id="wq" placeholder="Поиск в списке" value="${esc(UI.wq)}" aria-label="Поиск">
+  <select id="wsort" aria-label="Сортировка">${[['pred','Прогноз оценки'],['list','Как в Кинопоиске'],['yo','Год: старые'],['yn','Год: новые']].map(([k,l])=>`<option value="${k}" ${UI.wsort===k?'selected':''}>${l}</option>`).join('')}</select></div>
+  <div class="count">${rows.length} ${plural(rows.length,'фильм','фильма','фильмов')}. Оранжевое число — прогноз вашей оценки. Посмотрели? Нажмите и поставьте оценку.</div>`;
+  if(!rows.length)return h+'<div class="list"><div class="empty">Список пуст</div></div>';
+  h+='<div class="list">'+rows.slice(0,UI.limit).map(([x,i,p])=>{
+    const open=UI.open==='w'+i;
+    return `<div class="row"><button class="rowbtn" data-open="w${i}" aria-expanded="${open}">
+     <span class="score pred">${fmt(p)}</span>
+     <span class="t"><b>${esc(x[0])}</b><small>${esc([x[1],x[3]].filter(Boolean).join(' · '))}</small></span>
+     <span class="yr">${x[2]||''}</span></button>
+     ${open?`<div class="edit"><div class="why">${esc(predWhy(M,x))}</div><div class="why">Посмотрели? Поставьте оценку, и фильм перейдёт в «Оценки»:</div>${scaleHTML(null,'watched',i)}<div class="acts"><button class="btn" data-act="seen" data-i="${i}">Посмотрел без оценки</button><button class="btn" data-act="drop" data-i="${i}">Убрать из списка</button></div></div>`:''}</div>`;
+  }).join('')+'</div>';
+  if(rows.length>UI.limit)h+=`<button class="btn more" data-act="more">Показать ещё ${Math.min(200,rows.length-UI.limit)}</button>`;
+  return h;
+}
+
+function inLists(t,o){const a=norm(t),b=norm(o);return D.rated.some(x=>norm(x[0])===a||(b&&norm(x[1])===b))||D.watch.some(x=>norm(x[0])===a||(b&&norm(x[1])===b));}
+function inWatch(t){return D.watch.some(x=>norm(x[0])===norm(t));}
+
+function recsView(M){
+  const top=D.watch.map((x,i)=>[x,i,M.pred(x[3],x[2])]).sort((a,b)=>b[2]-a[2]).slice(0,12);
+  let h=`<h2>Начните с этого из вашего списка</h2><p class="lede">Прогноз считается по вашим ${M.n.toLocaleString('ru')} оценкам: насколько высоко вы ставите этот жанр и фильмы этого десятилетия. Чем больше оценок, тем точнее.</p><div class="list">`;
+  h+=top.map(([x,i,p])=>`<div class="row"><button class="rowbtn" data-gowatch="${i}"><span class="score pred">${fmt(p)}</span><span class="t"><b>${esc(x[0])}</b><small>${esc(predWhy(M,x))}</small></span><span class="yr">${x[2]||''}</span></button></div>`).join('')+'</div>';
+  h+=`<h2>Мои советы: чего нет ни в одном списке</h2><p class="lede">Подобрал по тому, что вы цените выше всего: документальное кино, анимацию, криминал и классику, а ещё по авторскому кино, которое уже ждёт в списке.</p><div class="list">`;
+  h+=PICKS.map((p,i)=>{
+    const w=inWatch(p[0]), seen=!w&&inLists(p[0],p[1]);
+    return `<div class="rec"><div class="t"><b>${esc(p[0])}</b><small>${esc([p[1]&&p[1]!==p[0]?p[1]:'',p[2],p[3]].filter(Boolean).join(' · '))}</small></div>${w?'<span class="added">В списке</span>':seen?'<span class="added">Уже есть</span>':`<button class="btn pri" data-act="addpick" data-i="${i}">В список</button>`}<p>${esc(p[4])}</p></div>`;
+  }).join('')+'</div>';
+  return h;
+}
+
+function bars(items,max){return '<div class="bars">'+items.map(([l,v,t])=>`<div class="bar"><span class="lab">${esc(l)}</span><span class="trk"><span class="fill" style="width:${Math.max(1,v/max*100)}%;display:block"></span></span><span class="val">${t}</span></div>`).join('')+'</div>';}
+
+function statsView(M){
+  const dist=Array(11).fill(0);D.rated.forEach(x=>{if(x[4]!=null)dist[x[4]]++});
+  const dmax=Math.max(...dist);
+  let h=`<h2>Как вы ставите оценки</h2><p class="lede">Почти половина оценок — десятки. Середины шкалы почти нет: «1» у вас скорее значит «не моё», чем «плохо снято».</p>`;
+  h+=bars([10,9,8,7,6,5,4,3,2,1].map(s=>[`Оценка ${s}`,dist[s],dist[s].toLocaleString('ru')]),dmax);
+  const g=Object.entries(M.G).filter(([k,v])=>v[1]>=10).map(([k,v])=>[k,v[0]/v[1],v[1]]).sort((a,b)=>b[1]-a[1]);
+  h+=`<h2>Средняя оценка по жанрам</h2><p class="lede">Жанры, где у вас 10 и больше оценок. Шкала начинается с 7, чтобы разница была видна.</p>`;
+  h+=bars(g.map(([k,a,n])=>[k,a-7,`${fmt(a)} · ${n}`]),3);
+  const y=Object.entries(M.Y).map(([k,v])=>[+k,v[0]/v[1],v[1]]).sort((a,b)=>a[0]-b[0]);
+  h+=`<h2>По десятилетиям</h2><p class="lede">Старое кино вы оцениваете выше, но и смотрите его выборочно.</p>`;
+  h+=bars(y.map(([k,a,n])=>[`${k}-е`,a-7,`${fmt(a)} · ${n}`]),3);
+  return h;
+}
+
+function plural(n,a,b,c){const m10=n%10,m100=n%100;return m10===1&&m100!==11?a:m10>=2&&m10<=4&&(m100<10||m100>=20)?b:c;}
+
+// ---- persistence ----
+function docHTML(){
+  D.v=(D.v||0)+1;
+  const data=JSON.stringify({v:D.v,rated:D.rated,watch:D.watch}).replace(/</g,'\\u003c');
+  const parts=[document.querySelector('title').outerHTML,document.getElementById('kp-fonts').outerHTML,document.getElementById('kp-style').outerHTML,
+    '<div id="app"><p class="empty">Загружаю фильмы…</p></div>',
+    '<script id="kp-data" type="application/json">'+data+'<\/script>',document.getElementById('kp-js').outerHTML];
+  return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>'+parts.join('\n')+'</body></html>';
+}
+function changed(){
+  dirty=true;render();
+  if(mode==='artifact'){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await saver.publish(docHTML());}catch(e){if(e&&e.code==='conflict'){}else{mode='local';saveLocal();}}dirty=false;render();},1500);}
+  else{saveLocal();dirty=false;setTimeout(render,0);}
+}
+function saveLocal(){try{D.v=(D.v||0)+1;localStorage.setItem('kp-local',JSON.stringify({v:D.v,rated:D.rated,watch:D.watch}));}catch(e){}}
+
+// ---- events ----
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.tab){UI.tab=b.dataset.tab;UI.open=null;UI.limit=80;try{localStorage.setItem('kp-ui',JSON.stringify({tab:UI.tab}))}catch(e){}render();window.scrollTo({top:0});return;}
+  if(b.dataset.rf!==undefined){UI.rf=b.dataset.rf;UI.limit=80;render();return;}
+  if(b.dataset.open){UI.open=UI.open===b.dataset.open?null:b.dataset.open;render();return;}
+  if(b.dataset.gowatch){UI.tab='watch';UI.wsort='pred';UI.wq='';UI.open='w'+b.dataset.gowatch;UI.limit=Math.max(UI.limit,400);render();setTimeout(()=>{const el=document.querySelector(`[data-open="w${b.dataset.gowatch}"]`);el&&el.scrollIntoView({block:'center'})},0);return;}
+  const a=b.dataset.act,i=+b.dataset.i,s=+b.dataset.s;
+  if(a==='more'){UI.limit+=200;render();return;}
+  if(a==='addopen'){UI.adding=!UI.adding;render();if(UI.adding){const el=document.getElementById('nf-title');el&&el.focus();}return;}
+  if(a==='nfrate'){UI.nf.rate=UI.nf.rate===s?null:s;UI.nf.err='';render();return;}
+  if(a==='jump'){const k=b.dataset.k;UI.adding=false;UI.nf={title:'',orig:'',year:'',genre:'',rate:null,err:''};UI.tab=k[0]==='r'?'rated':'watch';UI.q='';UI.wq='';UI.genre='';UI.rf='';UI.sort='date';UI.wsort='list';UI.open=k;const idx=+k.slice(1);UI.limit=Math.max(80,idx+40);render();setTimeout(()=>{const el=document.querySelector(`[data-open="${k}"]`);el&&el.scrollIntoView({block:'center'})},0);return;}
+  if(a==='rate'||a==='watched')toast(a==='rate'?`Оценка ${s} сохранена`:`Перенесено в оценки: ${s}`);
+  if(a==='rate'){D.rated[i][4]=s;changed();return;}
+  if(a==='unrate'){D.rated[i][4]=null;changed();return;}
+  if(a==='towatch'){const x=D.rated.splice(i,1)[0];D.watch.unshift([x[0],x[1],x[2],x[3]]);UI.open=null;changed();return;}
+  if(a==='watched'||a==='seen'){const x=D.watch.splice(i,1)[0];D.rated.unshift([x[0],x[1],x[2],x[3],a==='watched'?s:null]);UI.open=null;changed();return;}
+  if(a==='drop'){D.watch.splice(i,1);UI.open=null;changed();return;}
+  if(a==='addpick'){const p=PICKS[i];D.watch.unshift([p[0],p[1]&&p[1]!==p[0]?p[1]:'',p[2],p[3]]);changed();return;}
+});
+let tmr;
+document.addEventListener('input',e=>{
+  const id=e.target.id;
+  if(id==='q'||id==='wq'){UI[id]=e.target.value;UI.limit=80;clearTimeout(tmr);tmr=setTimeout(render,150);}
+  if(id&&id.startsWith('nf-')){UI.nf[id.slice(3)]=e.target.value;UI.nf.err='';if(id==='nf-title'){clearTimeout(tmr);tmr=setTimeout(render,250);}}
+});
+document.addEventListener('change',e=>{
+  const id=e.target.id;
+  if(id==='genre'||id==='sort'||id==='wsort'){UI[id]=e.target.value;UI.limit=80;render();}
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id!=='nf')return;e.preventDefault();
+  const F=UI.nf,dest=(e.submitter&&e.submitter.dataset.dest)||'rated';
+  const t=F.title.trim();if(!t){F.err='Введите название';render();return;}
+  const yr=String(F.year).trim(),y=parseInt(yr,10);
+  if(yr&&!(y>=1880&&y<=2035)){F.err='Год — четыре цифры, например 1975';render();return;}
+  const row=[t,F.orig.trim(),y||null,F.genre.trim().toLowerCase()];
+  if(dest==='watch'){D.watch.unshift(row);UI.tab='watch';UI.wsort='list';UI.wq='';toast(`«${t}» добавлен в «К просмотру»`);}
+  else{D.rated.unshift(row.concat([F.rate]));UI.tab='rated';UI.sort='date';UI.q='';UI.genre='';UI.rf='';toast(F.rate?`«${t}»: оценка ${F.rate}`:`«${t}» добавлен в оценки`);}
+  UI.nf={title:'',orig:'',year:'',genre:'',rate:null,err:''};UI.adding=false;UI.open=null;UI.limit=80;
+  changed();window.scrollTo({top:0});
+});
+
+render();
+(async()=>{
+  try{
+    const c=window.claude;const art=c&&c.use?await c.use('artifact'):null;
+    if(art){saver=art;mode='artifact';}else{mode='local';}
+  }catch(e){mode='local';}
+  render();
+})();
+})();
+</script>
+</body></html>

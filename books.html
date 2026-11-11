@@ -1,0 +1,332 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Читательский дневник</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: library index-card shelf — one column, card rows, tabs by status, sheet for editing */
+:root{
+  --bg:#0f2a1f; --paper:#16362a; --ink:#e8f1ec; --muted:#9db8aa; --line:#2a4d3e;
+  --accent:#5cc497; --accent-ink:#0b2018; --want:#9fb2ff; --reading:#e8ad66; --star:#f0c04e; --danger:#f08a78; color-scheme:dark;
+  --display:"Literata", Georgia, "Times New Roman", serif;
+  --ui:"Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:6px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(28px,7vw,40px);line-height:1.1;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px;margin:0}
+.sub a{color:var(--accent)}
+.stats{display:flex;flex-wrap:wrap;gap:8px 22px;font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink);font-weight:500;font-size:15px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{appearance:none;border:0;background:none;font:inherit;font-weight:500;color:var(--muted);padding:10px 12px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+.tab .n{font-family:var(--mono);font-size:12px;margin-left:4px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar input[type=search]{flex:1 1 200px;min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
+textarea{min-height:110px;resize:vertical;line-height:1.5}
+.toolbar select{width:auto}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{appearance:none;font:inherit;font-weight:500;border-radius:8px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink);white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.btn.danger{color:var(--danger);border-color:var(--danger);background:none}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{display:grid;grid-template-columns:4px 1fr;background:var(--paper);border:1px solid var(--line);border-radius:6px;cursor:pointer;text-align:left;font:inherit;color:inherit;padding:0;width:100%;overflow:hidden}
+.card:hover{border-color:var(--muted)}
+.card .edge{background:var(--accent)}
+.card[data-s="want"] .edge{background:var(--want)}
+.card[data-s="reading"] .edge{background:var(--reading)}
+.card .body{padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.card .top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.card .t{font-family:var(--display);font-size:18px;font-weight:600;line-height:1.25;min-width:0;overflow-wrap:anywhere}
+.card .a{color:var(--muted);font-size:14px}
+.card .meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.card .note{font-family:var(--display);font-style:italic;font-size:14px;color:var(--ink);opacity:.85;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stars{color:var(--star);letter-spacing:1px;white-space:nowrap;font-size:14px}
+.empty{background:var(--paper);border:1px dashed var(--line);border-radius:8px;padding:28px 20px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.empty h2{font-family:var(--display);font-weight:600;font-size:20px;margin:0}
+.empty p{margin:0;color:var(--muted);max-width:44ch}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.notice{font-size:13px;color:var(--muted);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,16,13,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:620px;max-height:92%;overflow:auto;border-radius:14px 14px 0 0;padding-block:18px calc(18px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+@media (min-width:700px){.scrim{align-items:center}.sheet{border-radius:14px}}
+.sheet h2{font-family:var(--display);font-size:22px;font-weight:600;margin:0}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label,.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:460px){.grid2{grid-template-columns:1fr}}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;appearance:none;border:0;background:var(--paper);font:inherit;font-size:14px;padding:9px 6px;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.rate{display:flex;align-items:center;gap:2px}
+.rate button{appearance:none;border:0;background:none;font-size:30px;line-height:1;padding:2px 3px;cursor:pointer;color:var(--line);position:relative}
+.rate button.on{color:var(--star)}
+.rate button.half{background:linear-gradient(90deg,var(--star) 50%,var(--line) 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rate .val{font-family:var(--mono);margin-left:10px;color:var(--muted);font-size:14px;min-width:3ch}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.actions .r{display:flex;gap:8px;margin-left:auto}
+.hint{font-size:13px;color:var(--muted);margin:0}
+code{font-family:var(--mono);font-size:12.5px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:1px 4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:20px;font-size:14px;z-index:30}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(20px);opacity:.6}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Читательский дневник</h1>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-tab="read" aria-selected="true">Прочитано<span class="n" id="n-read"></span></button>
+    <button class="tab" role="tab" data-tab="reading" aria-selected="false">Читаю<span class="n" id="n-reading"></span></button>
+    <button class="tab" role="tab" data-tab="want" aria-selected="false">Хочу прочитать<span class="n" id="n-want"></span></button>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Поиск по названию, автору, заметкам">
+    <select id="sort" aria-label="Сортировка">
+      <option value="date">Сначала новые</option>
+      <option value="rating">По оценке</option>
+      <option value="title">По названию</option>
+      <option value="author">По автору</option>
+    </select>
+    <button class="btn primary" id="addBtn">+ Книга</button>
+    <button class="btn" id="importBtn">Импорт</button>
+  </div>
+
+  <div id="notice" class="notice" hidden></div>
+  <div class="list" id="list">
+    <div class="empty"><h2>Открываю полку…</h2><p>Здесь появятся ваши книги: прочитанные с оценками и заметками, текущие и список «хочу прочитать».</p></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const STATUS = {read:"Прочитано", reading:"Читаю", want:"Хочу прочитать"};
+let books = {};           // id -> data
+let tab = "read";
+let store = null;         // {save(id,data), remove(id)}
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => "b" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const today = () => new Date().toISOString().slice(0,10);
+
+function starStr(r){
+  if(!r) return "";
+  const f=Math.floor(r), h=r-f>=0.5;
+  return "★".repeat(f)+(h?"½":"")+"☆".repeat(5-f-(h?1:0));
+}
+function fmtDate(d){
+  if(!d) return "";
+  const [y,m,dd]=d.split("-"); const M=["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"];
+  return dd ? `${+dd} ${M[+m-1]} ${y}` : (m ? `${M[+m-1]} ${y}` : y);
+}
+
+/* ---------- render ---------- */
+function render(){
+  const all = Object.entries(books).map(([id,b])=>({id,...b}));
+  for(const s of Object.keys(STATUS)) $("#n-"+s).textContent = all.filter(b=>b.status===s).length || "";
+  const read = all.filter(b=>b.status==="read");
+  const yr = String(new Date().getFullYear());
+  const rated = read.filter(b=>b.rating>0);
+  const avg = rated.length ? (rated.reduce((a,b)=>a+b.rating,0)/rated.length).toFixed(2) : "—";
+  $("#stats").innerHTML = `<span><b>${read.length}</b> прочитано</span><span><b>${read.filter(b=>(b.dateRead||"").startsWith(yr)).length}</b> в ${yr}</span><span><b>${avg}</b> средняя оценка</span><span><b>${all.filter(b=>b.status==="want").length}</b> в планах</span>`;
+
+  const q = $("#q").value.trim().toLowerCase();
+  let rows = all.filter(b=>b.status===tab);
+  if(q) rows = rows.filter(b=>[b.title,b.author,b.note].join(" ").toLowerCase().includes(q));
+  const sort = $("#sort").value;
+  const key = b => b.status==="read" ? (b.dateRead||"") : (b.added||"");
+  rows.sort((a,b)=> sort==="rating" ? (b.rating||0)-(a.rating||0) || key(b).localeCompare(key(a))
+    : sort==="title" ? (a.title||"").localeCompare(b.title||"","ru")
+    : sort==="author" ? (a.author||"").localeCompare(b.author||"","ru")
+    : key(b).localeCompare(key(a)));
+
+  const list = $("#list");
+  if(!rows.length){
+    list.innerHTML = q ? `<div class="empty"><h2>Ничего не нашлось</h2><p>Попробуйте другое слово или очистите поиск.</p></div>`
+     : `<div class="empty"><h2>${tab==="want"?"Список пока пуст":tab==="reading"?"Сейчас ничего не читаете":"Полка пока пуста"}</h2>
+        <p>${tab==="want"?"Добавляйте книги, которые хотите прочитать — потом одним нажатием перенесёте их в прочитанные.":"Добавьте книгу вручную или перенесите список с LiveLib через импорт."}</p>
+        <div class="row"><button class="btn primary" data-act="add">+ Книга</button>${tab==="read"?'<button class="btn" data-act="import">Импорт с LiveLib</button>':""}</div></div>`;
+    return;
+  }
+  list.innerHTML = rows.map(b=>`
+    <button class="card" data-id="${esc(b.id)}" data-s="${esc(b.status)}">
+      <span class="edge"></span>
+      <span class="body">
+        <span class="top"><span class="t">${esc(b.title)}</span>${b.rating?`<span class="stars" title="${b.rating}">${starStr(b.rating)}</span>`:""}</span>
+        ${b.author?`<span class="a">${esc(b.author)}</span>`:""}
+        <span class="meta">${b.status==="read"&&b.dateRead?`<span>прочитана ${fmtDate(b.dateRead)}</span>`:""}${b.status!=="read"&&b.added?`<span>добавлена ${fmtDate(b.added.slice(0,10))}</span>`:""}${b.rating?`<span>${b.rating}/5</span>`:""}</span>
+        ${b.note?`<span class="note">${esc(b.note)}</span>`:""}
+      </span>
+    </button>`).join("");
+}
+
+/* ---------- toast ---------- */
+let tt; function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(tt); tt=setTimeout(()=>t.hidden=true,2200); }
+
+/* ---------- sheet ---------- */
+function closeSheet(){ $("#scrim").hidden=true; $("#scrim").innerHTML=""; }
+$("#scrim").addEventListener("click",e=>{ if(e.target.id==="scrim") closeSheet(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("#scrim").hidden) closeSheet(); });
+
+function openEditor(id){
+  const b = id ? {...books[id]} : {title:"",author:"",status:tab,rating:0,dateRead:tab==="read"?today():"",note:""};
+  let rating = b.rating||0, status = b.status;
+  const s = $("#scrim");
+  s.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="Книга">
+    <h2>${id?"Книга":"Новая книга"}</h2>
+    <div class="field"><label for="f-title">Название</label><input id="f-title" value="${esc(b.title)}" autocomplete="off"></div>
+    <div class="field"><label for="f-author">Автор</label><input id="f-author" value="${esc(b.author)}" autocomplete="off"></div>
+    <div class="field"><span class="lbl">Статус</span><div class="seg" id="f-status">${Object.entries(STATUS).map(([k,v])=>`<button type="button" data-v="${k}" aria-pressed="${k===status}">${v}</button>`).join("")}</div></div>
+    <div id="readOnly" class="grid2">
+      <div class="field"><span class="lbl">Оценка</span><div class="rate" id="f-rate"></div></div>
+      <div class="field"><label for="f-date">Дата прочтения</label><input id="f-date" type="date" value="${esc(b.dateRead||"")}"></div>
+    </div>
+    <div class="field"><label for="f-note">Заметки</label><textarea id="f-note" placeholder="Впечатления, цитаты, мысли">${esc(b.note)}</textarea></div>
+    <p class="hint"><a href="https://www.livelib.ru/find/books/${encodeURIComponent((b.title+" "+(b.author||"")).trim())}" target="_blank" rel="noopener" id="f-ll" ${b.title?"":"hidden"}>Найти на LiveLib ↗</a></p>
+    <div class="actions">${id?'<button class="btn danger" id="f-del">Удалить</button>':""}<div class="r"><button class="btn ghost" id="f-cancel">Отмена</button><button class="btn primary" id="f-save">Сохранить</button></div></div>
+  </div>`;
+  s.hidden=false;
+  const drawRate = () => {
+    const r=$("#f-rate");
+    r.innerHTML = [1,2,3,4,5].map(i=>`<button type="button" data-i="${i}" aria-label="${i}" class="${rating>=i?"on":rating>=i-0.5?"half":""}">★</button>`).join("")+`<span class="val">${rating||"—"}</span>${rating?'<button type="button" class="btn ghost" data-clear style="font-size:13px;padding:4px 8px">сбросить</button>':""}`;
+  };
+  const syncStatus = () => {
+    s.querySelectorAll("#f-status button").forEach(x=>x.setAttribute("aria-pressed", x.dataset.v===status));
+    $("#readOnly").hidden = status==="want";
+  };
+  drawRate(); syncStatus();
+  $("#f-rate").addEventListener("click",e=>{
+    if(e.target.closest("[data-clear]")){ rating=0; drawRate(); return; }
+    const btn=e.target.closest("[data-i]"); if(!btn) return;
+    const i=+btn.dataset.i; rating = rating===i ? i-0.5 : i; drawRate();
+  });
+  $("#f-status").addEventListener("click",e=>{
+    const v=e.target.closest("[data-v]")?.dataset.v; if(!v) return;
+    status=v; if(v==="read" && !$("#f-date").value) $("#f-date").value=today(); syncStatus();
+  });
+  $("#f-cancel").onclick=closeSheet;
+  $("#f-title").focus();
+  const del=$("#f-del");
+  if(del) del.onclick=async()=>{
+    if(del.dataset.armed){ await store.remove(id); closeSheet(); toast("Книга удалена"); }
+    else { del.dataset.armed=1; del.textContent="Точно удалить?"; }
+  };
+  $("#f-save").onclick=async()=>{
+    const title=$("#f-title").value.trim();
+    if(!title){ $("#f-title").focus(); $("#f-title").placeholder="Введите название"; return; }
+    const data={ title, author:$("#f-author").value.trim(), status,
+      rating: status==="want"?0:rating, dateRead: status==="read"?$("#f-date").value:"",
+      note:$("#f-note").value.trim(), added: b.added || new Date().toISOString() };
+    const bid = id || uid();
+    try{ await store.save(bid,data); closeSheet(); tab=status; setTab(); toast("Сохранено"); }
+    catch(e){ toast("Не удалось сохранить: "+(e?.message||e?.code||"ошибка")); }
+  };
+}
+
+/* ---------- import ---------- */
+function parseImport(text, status){
+  const out=[]; const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(!lines.length) return out;
+  const delim = (lines[0].match(/;/g)||[]).length >= (lines[0].match(/,/g)||[]).length ? ";" : ",";
+  const head = lines[0].toLowerCase();
+  if(/назв|title/.test(head) && head.includes(delim)){
+    const split = l => { const r=[]; let cur="",q=false; for(const c of l){ if(c=='"'){q=!q;continue} if(c===delim&&!q){r.push(cur);cur="";continue} cur+=c } r.push(cur); return r.map(x=>x.trim()); };
+    const h = split(lines[0]).map(x=>x.toLowerCase());
+    const ix = re => h.findIndex(x=>re.test(x));
+    const iT=ix(/назв|title/), iA=ix(/автор|author/), iR=ix(/оцен|рейт|rating/), iD=ix(/дата|date/), iN=ix(/рецен|замет|коммент|note|review/);
+    for(const l of lines.slice(1)){ const c=split(l); if(!c[iT]) continue;
+      out.push({title:c[iT], author:iA>=0?c[iA]:"", rating: iR>=0?Math.min(5,parseFloat((c[iR]||"").replace(",","."))||0):0,
+        dateRead: iD>=0?normDate(c[iD]):"", note: iN>=0?c[iN]:""}); }
+    return out;
+  }
+  for(const l of lines){
+    const parts=l.split(/\s+[—–-]\s+|\s*\/\s*|\t/).map(x=>x.trim()).filter(Boolean);
+    let rating=0; const last=parts[parts.length-1];
+    if(parts.length>1 && /^\d([.,]5)?$/.test(last)){ rating=Math.min(5,parseFloat(last.replace(",","."))); parts.pop(); }
+    out.push({title:parts[0], author:parts[1]||"", rating, dateRead:"", note:""});
+  }
+  return out;
+}
+function normDate(s){ if(!s) return ""; let m=s.match(/(\d{4})-(\d{2})-(\d{2})/); if(m) return m[0];
+  m=s.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/); if(m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  m=s.match(/\d{4}/); return m?m[0]+"-01-01":""; }
+
+function openImport(){
+  const s=$("#scrim");
+  s.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-label="Импорт">
+    <h2>Импорт с LiveLib</h2>
+    <p class="hint">Вставьте список книг — по одной на строку в виде <code>Название — Автор — 4.5</code> (оценка необязательна). Подойдёт и таблица CSV из экспорта LiveLib со столбцами «Название», «Автор», «Оценка», «Дата».</p>
+    <div class="field"><label for="i-text">Список</label><textarea id="i-text" style="min-height:180px" placeholder="Мастер и Маргарита — Михаил Булгаков — 5&#10;Пикник на обочине — Аркадий и Борис Стругацкие — 4.5"></textarea></div>
+    <div class="field"><span class="lbl">Куда добавить</span><div class="seg" id="i-status">${Object.entries(STATUS).map(([k,v])=>`<button type="button" data-v="${k}" aria-pressed="${k===(tab)}">${v}</button>`).join("")}</div></div>
+    <p class="hint" id="i-prev">Пока ничего не распознано.</p>
+    <div class="actions"><div class="r"><button class="btn ghost" id="i-cancel">Отмена</button><button class="btn primary" id="i-go" disabled>Добавить</button></div></div>
+  </div>`;
+  s.hidden=false;
+  let st=tab, parsed=[];
+  const upd=()=>{
+    parsed=parseImport($("#i-text").value, st);
+    const existing=new Set(Object.values(books).map(b=>(b.title+"|"+b.author).toLowerCase()));
+    parsed=parsed.filter(p=>!existing.has((p.title+"|"+p.author).toLowerCase()));
+    $("#i-prev").textContent = parsed.length ? `Распознано книг: ${parsed.length}. Например: «${parsed[0].title}»${parsed[0].author?", "+parsed[0].author:""}${parsed[0].rating?", "+parsed[0].rating+"/5":""}.` : "Пока ничего не распознано (дубликаты уже на полке пропускаются).";
+    $("#i-go").disabled=!parsed.length;
+  };
+  $("#i-text").addEventListener("input",upd);
+  $("#i-status").addEventListener("click",e=>{ const v=e.target.closest("[data-v]")?.dataset.v; if(!v)return; st=v; s.querySelectorAll("#i-status button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===st)); });
+  $("#i-cancel").onclick=closeSheet;
+  $("#i-go").onclick=async()=>{
+    const go=$("#i-go"); go.disabled=true; let n=0; const t0=Date.now();
+    for(const p of parsed){
+      try{ await store.save(uid(),{...p,status:st,rating:st==="want"?0:p.rating,dateRead:st==="read"?p.dateRead:"",added:new Date(t0-n).toISOString()}); n++; go.textContent=`Добавлено ${n}/${parsed.length}`; }
+      catch(e){ toast("Остановлено: "+(e?.message||e?.code)); break; }
+    }
+    closeSheet(); tab=st; setTab(); toast(`Добавлено книг: ${n}`);
+  };
+}
+
+/* ---------- tabs & controls ---------- */
+function setTab(){ document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.tab===tab)); render(); }
+$("#tabs").addEventListener("click",e=>{ const t=e.target.closest(".tab"); if(!t) return; tab=t.dataset.tab; setTab(); try{localStorage.setItem("tab",tab)}catch{} });
+$("#q").addEventListener("input",render);
+$("#sort").addEventListener("change",render);
+$("#addBtn").onclick=()=>openEditor(null);
+$("#importBtn").onclick=openImport;
+$("#list").addEventListener("click",e=>{
+  const c=e.target.closest(".card"); if(c) return openEditor(c.dataset.id);
+  const a=e.target.closest("[data-act]"); if(!a) return;
+  a.dataset.act==="add"?openEditor(null):openImport();
+});
+try{ const t=localStorage.getItem("tab"); if(t&&STATUS[t]) tab=t; }catch{}
+document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.tab===tab));
+
+/* ---------- storage ---------- */
+function useLocal(msg){
+  try{ books=JSON.parse(localStorage.getItem("books")||"{}"); }catch{ books={}; }
+  const persist=()=>{ try{ localStorage.setItem("books",JSON.stringify(books)); }catch{} };
+  store={ save:async(id,d)=>{books[id]=d;persist();render();}, remove:async id=>{delete books[id];persist();render();} };
+  if(msg){ $("#notice").textContent=msg; $("#notice").hidden=false; }
+  render();
+}
+(async()=>{
+  const db = window.claude?.use ? await window.claude.use("db") : null;
+  if(!db){ useLocal("Облачное хранилище сейчас недоступно — книги сохраняются только в этом браузере."); return; }
+  const col = db.collection("books");
+  store={ save:(id,d)=>col.doc(id).set(d), remove:id=>col.doc(id).delete() };
+  col.onSnapshot(snap=>{
+    const next={}; snap.docs.forEach(d=>{ next[d.id]=d.data(); }); books=next; render();
+  }, err=>{ $("#notice").textContent="Связь с хранилищем прервалась. Обновите страницу."; $("#notice").hidden=false; });
+})();
+</script>
+
+</body></html>
