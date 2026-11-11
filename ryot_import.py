@@ -8,7 +8,9 @@
 Повторный запуск быстрый: найденное кешируется в /root/ryot-match-cache.json
 """
 import json
+import os
 import re
+import threading
 import sqlite3
 import sys
 import time
@@ -52,6 +54,18 @@ def get(url, headers=None, tries=4):
         except Exception:
             time.sleep(1.5 * (i + 1))
     return None
+
+
+LOCK = threading.Lock()
+
+
+def save_cache(cache):
+    with LOCK:
+        snap = dict(cache)
+    tmp = CACHE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(snap, f, ensure_ascii=False)
+    os.replace(tmp, CACHE)
 
 
 def norm(s):
@@ -151,21 +165,24 @@ def main():
         nonlocal done
         _, r = item
         res = match_film(r)
-        cache[f"f|{r[0]}|{r[1]}|{r[2]}"] = res
-        done += 1
-        if done % 100 == 0:
-            print(f"  фильмы: {done}/{len(todo)}", flush=True)
-            json.dump(cache, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
+        with LOCK:
+            cache[f"f|{r[0]}|{r[1]}|{r[2]}"] = res
+            done += 1
+            n = done
+        if n % 100 == 0:
+            print(f"  фильмы: {n}/{len(todo)}", flush=True)
+            if n % 500 == 0:
+                save_cache(cache)
 
     with ThreadPoolExecutor(8) as ex:
         list(ex.map(work, todo))
-    json.dump(cache, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
+    save_cache(cache)
 
     for bid, b in books.items():
         k = f"b|{b.get('title')}|{b.get('author')}"
         if k not in cache:
             cache[k] = match_book(b)
-    json.dump(cache, open(CACHE, "w", encoding="utf-8"), ensure_ascii=False)
+    save_cache(cache)
 
     now = datetime.now(timezone.utc).isoformat()
     watch_coll = [{"collection_id": "", "collection_name": "Watchlist", "created_on": now, "creator_user_id": "",
