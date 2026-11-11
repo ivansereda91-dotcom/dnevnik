@@ -222,7 +222,8 @@ def main():
         st = b.get("status")
         rating = b.get("rating") or 0
         if st == "read":
-            date = (b.get("dateRead") or "") or None
+            d = b.get("dateRead") or ""
+            date = f"{d}T12:00:00Z" if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) else None
             add(m["id"], "book", "openlibrary", label, int(round(rating * 20)) if rating else None,
                 {"state": "completed", "ended_on": date}, note=b.get("note") or None)
         elif st == "reading":
